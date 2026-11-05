@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>FileHop</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232f6fed'/><path d='M16 7l7 7h-4.5v9h-5v-9H9z' fill='white'/></svg>">
+<style>
+:root{
+  --bg:#f4f5f7;--card:#fff;--text:#14161b;--muted:#697080;--line:#e3e6eb;
+  --accent:#2f6fed;--accent-soft:#e9f0ff;--on-accent:#fff;
+  --danger:#d63c3c;--warn:#c27803;--track:#e7eaf0;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 6px 20px rgba(16,24,40,.06);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0e1014;--card:#171a20;--text:#e8eaee;--muted:#8f96a3;--line:#262a33;
+  --accent:#5b8cff;--accent-soft:#1b2540;--on-accent:#0b1020;
+  --danger:#ff6b6b;--warn:#f0b429;--track:#252a34;--shadow:none;}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px calc(32px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;gap:10px;padding:6px 0 16px}
+.logo{width:32px;height:32px;border-radius:9px;background:var(--accent);display:grid;place-items:center;flex:none}
+.logo svg{width:18px;height:18px;fill:#fff}
+header h1{font-size:19px;margin:0;font-weight:650;letter-spacing:-.01em;flex:1}
+button{font:inherit;color:inherit}
+.icon-btn{background:none;border:0;color:var(--muted);width:40px;height:40px;border-radius:10px;display:grid;place-items:center;cursor:pointer;flex:none}
+.icon-btn:hover{background:var(--track);color:var(--text)}
+.icon-btn svg{width:20px;height:20px}
+.icon-btn.spin svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 14px;cursor:pointer;font-weight:550}
+.btn:hover{background:var(--track)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.danger{color:var(--danger)}
+.btn:disabled{opacity:.55;cursor:default}
+.drop{display:block;padding:28px 20px;text-align:center;border:2px dashed var(--line);border-radius:16px;background:var(--card);cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop svg{width:34px;height:34px;color:var(--accent)}
+.drop strong{display:block;margin:8px 0 2px;font-size:16px}
+.drop span{color:var(--muted);font-size:13px}
+.drop input{display:none}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin:24px 2px 10px}
+.section-head h2{font-size:14px;margin:0;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.section-head small{color:var(--muted)}
+.list .item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line)}
+.list .item:first-child{border-top:0}
+.ext{width:40px;height:40px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:10.5px;font-weight:700;letter-spacing:.03em;flex:none;text-transform:uppercase;overflow:hidden}
+.info{flex:1;min-width:0}
+.name{font-weight:560;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta{color:var(--muted);font-size:12.5px;margin-top:1px}
+.meta .soon{color:var(--warn);font-weight:600}
+.meta .err{color:var(--danger)}
+.bar{height:4px;border-radius:4px;background:var(--track);margin-top:7px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.bar.indet i{width:35%;animation:indet 1.1s ease-in-out infinite}
+@keyframes indet{0%{transform:translateX(-100%)}100%{transform:translateX(290%)}}
+.actions{display:flex;gap:2px}
+.actions .icon-btn.del:hover{color:var(--danger)}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+.note{color:var(--muted);font-size:12.5px;text-align:center;margin:12px 4px 0}
+form.setup{padding:20px}
+form.setup h2{margin:0 0 4px;font-size:18px}
+form.setup p{margin:0 0 16px;color:var(--muted);font-size:13.5px}
+label{display:block;font-size:13px;font-weight:600;margin:12px 0 5px}
+input[type=text],input[type=password]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font:inherit;color:inherit}
+input:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+.row{display:flex;gap:10px}
+.row>div{flex:1;min-width:0}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+.form-msg{font-size:13px;margin-top:12px;min-height:1em}
+.form-msg.bad{color:var(--danger)}
+dialog{border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--text);padding:0;width:min(420px,calc(100vw - 32px));box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(10,12,16,.5)}
+.dlg{padding:20px}
+.dlg h3{margin:0 0 6px;font-size:17px}
+.dlg p{margin:0 0 12px;color:var(--muted);font-size:13.5px}
+#qr{display:grid;place-items:center;background:#fff;border-radius:12px;padding:14px;margin:6px auto 12px;width:max-content}
+#qr img,#qr canvas{display:block}
+.warnbox{font-size:12.5px;border-radius:10px;padding:9px 11px;background:var(--accent-soft);color:var(--text)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.2s;max-width:calc(100vw - 32px);z-index:10}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.hidden{display:none!important}
+.dragmask{position:fixed;inset:0;background:var(--accent-soft);border:3px dashed var(--accent);display:grid;place-items:center;font-size:20px;font-weight:650;color:var(--accent);z-index:5;opacity:.96}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3l7 7h-4.5v9h-5v-9H5z"/></svg></div>
+    <h1>FileHop</h1>
+    <button class="icon-btn hidden" id="refreshBtn" title="Refresh" aria-label="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
+    <button class="icon-btn hidden" id="linkBtn" title="Link another device" aria-label="Link another device"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg></button>
+    <button class="icon-btn hidden" id="settingsBtn" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  </header>
+
+  <!-- Setup -->
+  <form class="setup card hidden" id="setupForm" autocomplete="off">
+    <h2>Connect your storage repo</h2>
+    <p>Files are kept in a <b>private</b> GitHub repo. Your token stays in this browser only.</p>
+    <div class="row">
+      <div><label for="fOwner">GitHub username</label><input type="text" id="fOwner" required spellcheck="false" autocapitalize="off" placeholder="your-username"></div>
+      <div><label for="fRepo">Storage repo</label><input type="text" id="fRepo" required spellcheck="false" autocapitalize="off" placeholder="filehop-storage"></div>
+    </div>
+    <label for="fToken">Fine-grained access token</label>
+    <input type="password" id="fToken" required spellcheck="false" autocapitalize="off" placeholder="github_pat_…">
+    <div class="form-msg" id="setupMsg"></div>
+    <div class="form-actions">
+      <button type="button" class="btn danger hidden" id="forgetBtn">Forget this device</button>
+      <button type="button" class="btn hidden" id="cancelSetup">Cancel</button>
+      <button type="submit" class="btn primary" id="saveBtn">Connect</button>
+    </div>
+  </form>
+
+  <!-- Main -->
+  <main id="mainView" class="hidden">
+    <label class="drop" id="drop">
+      <input type="file" id="fileInput" multiple>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+      <strong>Tap to upload</strong>
+      <span>or drop / paste files · up to 20 MB each · deleted after 1 hour</span>
+    </label>
+
+    <div id="uploadsWrap" class="hidden">
+      <div class="section-head"><h2>Uploading</h2></div>
+      <div class="card list" id="uploads"></div>
+    </div>
+
+    <div class="section-head"><h2>Files</h2><small id="count"></small></div>
+    <div class="card list" id="files"><div class="empty">Loading…</div></div>
+    <p class="note" id="expiredNote"></p>
+  </main>
+</div>
+
+<dialog id="linkDlg">
+  <div class="dlg">
+    <h3>Link another device</h3>
+    <p>Scan this with your other device's camera. It opens FileHop already connected.</p>
+    <div id="qr"></div>
+    <div class="warnbox">Anyone who scans this code or gets this link can access your files until you revoke the token. Don't screenshot or share it.</div>
+    <div class="form-actions">
+      <button class="btn" id="copyLinkBtn">Copy link</button>
+      <button class="btn primary" id="closeLinkBtn">Done</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="dragmask hidden" id="dragmask">Drop to upload</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  // ---- Settings (keep TTL in sync with .github/workflows/cleanup.yml) ----
+  const MAX_BYTES = 20 * 1024 * 1024; // 20 MB per file
+  const TTL = 3600;                   // seconds a file lives
+  const BRANCH = "data";              // storage branch (created automatically)
+  const DIR = "files";                // folder inside the storage branch
+  const API = "https://api.github.com";
+  const KEY = "filehop.config.v1";
+
+  const $ = id => document.getElementById(id);
+  let cfg = null;
+  let files = [];
+  let loading = false;
+
+  // ---------- storage ----------
+  function loadCfg() { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } }
+  function saveCfg(c) { cfg = c; try { localStorage.setItem(KEY, JSON.stringify(c)); } catch {} }
+  function clearCfg() { cfg = null; try { localStorage.removeItem(KEY); } catch {} }
+
+  // ---------- helpers ----------
+  const rp = () => `/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}`;
+  const encPath = p => p.split("/").map(encodeURIComponent).join("/");
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const now = () => Math.floor(Date.now() / 1000);
+
+  function fmtSize(b) {
+    if (b < 1024) return b + " B";
+    if (b < 1048576) return (b / 1024).toFixed(b < 10240 ? 1 : 0) + " KB";
+    return (b / 1048576).toFixed(1) + " MB";
+  }
+  function fmtAgo(s) {
+    if (s < 60) return "just now";
+    if (s < 3600) return Math.floor(s / 60) + " min ago";
+    return Math.floor(s / 3600) + " h ago";
+  }
+  function toast(msg, ms = 2600) {
+    const t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), ms);
+  }
+  function friendly(e) {
+    const s = e && e.status;
+    if (s === 401) return "Token rejected — check or renew it in Settings.";
+    if (s === 403) return "Not allowed — the token needs Contents: Read and write on this repo.";
+    if (s === 404) return "Repo not found — check the name, and that the token can access it.";
+    return (e && e.message) || "Something went wrong.";
+  }
+
+  async function gh(path, opts = {}) {
+    const headers = { Authorization: "Bearer " + cfg.token, Accept: "application/vnd.github+json" };
+    if (opts.body) headers["Content-Type"] = "application/json";
+    const res = await fetch(API + path, { cache: "no-store", ...opts, headers: { ...headers, ...(opts.headers || {}) } });
+    if (!res.ok) {
+      let msg = "";
+      try { msg = (await res.json()).message || ""; } catch {}
+      const err = new Error(`GitHub error ${res.status}${msg ? ": " + msg : ""}`);
+      err.status = res.status; throw err;
+    }
+    return res.status === 204 ? null : res.json();
+  }
+
+  // XHR so we can show progress for the big transfers
+  function xhr(method, path, { body = null, accept = "application/vnd.github+json", responseType = "json", onUp, onDown } = {}) {
+    return new Promise((resolve, reject) => {
+      const x = new XMLHttpRequest();
+      x.open(method, API + path);
+      x.setRequestHeader("Authorization", "Bearer " + cfg.token);
+      x.setRequestHeader("Accept", accept);
+      if (body) x.setRequestHeader("Content-Type", "application/json");
+      x.responseType = responseType;
+      if (onUp) x.upload.onprogress = e => e.lengthComputable && onUp(e.loaded / e.total);
+      if (onDown) x.onprogress = e => onDown(e.lengthComputable ? e.loaded / e.total : null);
+      x.onload = () => {
+        if (x.status >= 200 && x.status < 300) return resolve(x.response);
+        const msg = responseType === "json" && x.response && x.response.message ? ": " + x.response.message : "";
+        const err = new Error(`GitHub error ${x.status}${msg}`); err.status = x.status; reject(err);
+      };
+      x.onerror = () => reject(new Error("Network error — check your connection."));
+      x.send(body);
+    });
+  }
+
+  function toBase64(file) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result.slice(r.result.indexOf(",") + 1));
+      r.onerror = () => rej(r.error || new Error("Could not read file"));
+      r.readAsDataURL(file);
+    });
+  }
+
+  function parseItem(i) {
+    const m = /^(\d{10})_(.+)$/.exec(i.name);
+    return { path: i.path, sha: i.sha, size: i.size, ts: m ? +m[1] : null, name: m ? m[2] : i.name };
+  }
+
+  // ---------- GitHub operations ----------
+  async function listFiles() {
+    try {
+      const items = await gh(`${rp()}/contents/${DIR}?ref=${BRANCH}`);
+      return Array.isArray(items) ? items.filter(i => i.type === "file").map(parseItem) : [];
+    } catch (e) {
+      if (e.status === 404) return []; // branch or folder not created yet / cleaned up
+      throw e;
+    }
+  }
+
+  async function uploadFile(file, onUp, onStage) {
+    const safe = (file.name || "file").replace(/[\/\\\u0000-\u001f]/g, "_").trim() || "file";
+    const path = `${DIR}/${now()}_${safe}`;
+    onStage("Reading…");
+    const content = await toBase64(file);
+    onStage("Uploading…");
+    const blob = await xhr("POST", `${rp()}/git/blobs`, { body: JSON.stringify({ content, encoding: "base64" }), onUp });
+    onStage("Saving…");
+    for (let attempt = 0; attempt < 5; attempt++) {
+      let parent = null, baseTree = null;
+      try {
+        const ref = await gh(`${rp()}/git/ref/heads/${BRANCH}`);
+        parent = ref.object.sha;
+        baseTree = (await gh(`${rp()}/git/commits/${parent}`)).tree.sha;
+      } catch (e) { if (e.status !== 404) throw e; }
+      const tree = await gh(`${rp()}/git/trees`, { method: "POST", body: JSON.stringify({
+        ...(baseTree ? { base_tree: baseTree } : {}),
+        tree: [{ path, mode: "100644", type: "blob", sha: blob.sha }] }) });
+      const commit = await gh(`${rp()}/git/commits`, { method: "POST", body: JSON.stringify({
+        message: `Upload ${safe}`, tree: tree.sha, parents: parent ? [parent] : [] }) });
+      try {
+        if (parent) await gh(`${rp()}/git/refs/heads/${BRANCH}`, { method: "PATCH", body: JSON.stringify({ sha: commit.sha, force: false }) });
+        else await gh(`${rp()}/git/refs`, { method: "POST", body: JSON.stringify({ ref: `refs/heads/${BRANCH}`, sha: commit.sha }) });
+        return;
+      } catch (e) {
+        // branch moved (another upload or the cleanup job) — rebuild on the new tip
+        if (![404, 409, 422].includes(e.status)) throw e;
+        await sleep(600 + attempt * 600);
+      }
+    }
+    throw new Error("Couldn't save after several tries — please retry.");
+  }
+
+  async function downloadFile(f, onDown) {
+    const data = await xhr("GET", `${rp()}/git/blobs/${f.sha}`, { accept: "application/vnd.github.raw+json", responseType: "blob", onDown });
+    const url = URL.createObjectURL(data);
+    const a = document.createElement("a");
+    a.href = url; a.download = f.name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+
+  async function deleteFile(f) {
+    await gh(`${rp()}/contents/${encPath(f.path)}`, { method: "DELETE",
+      body: JSON.stringify({ message: `Delete ${f.name}`, sha: f.sha, branch: BRANCH }) });
+  }
+
+  // ---------- UI: file list ----------
+  const ICON_DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>';
+  const ICON_DEL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/></svg>';
+
+  function extOf(name) { const m = /\.([a-z0-9]{1,5})$/i.exec(name); return m ? m[1] : "file"; }
+
+  function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+  function renderFiles() {
+    const box = $("files");
+    const t = now();
+    const live = files.filter(f => f.ts == null || t - f.ts < TTL).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    const expired = files.length - live.length;
+    $("count").textContent = live.length ? `${live.length} file${live.length > 1 ? "s" : ""}` : "";
+    $("expiredNote").textContent = expired ? `${expired} expired file${expired > 1 ? "s" : ""} hidden — removed at the next hourly cleanup.` : "";
+    box.replaceChildren();
+    if (!live.length) { box.append(el("div", "empty", loading ? "Loading…" : "No files yet. Upload something and open FileHop on your other device.")); return; }
+    for (const f of live) {
+      const item = el("div", "item");
+      const ext = el("div", "ext", extOf(f.name));
+      const info = el("div", "info");
+      info.append(el("div", "name", f.name));
+      const meta = el("div", "meta");
+      meta.append(document.createTextNode(`${fmtSize(f.size)}`));
+      if (f.ts != null) {
+        const left = TTL - (t - f.ts);
+        meta.append(document.createTextNode(` · ${fmtAgo(t - f.ts)} · `));
+        const exp = el("span", left < 600 ? "soon" : "", `expires in ${Math.max(1, Math.ceil(left / 60))} min`);
+        meta.append(exp);
+      }
+      info.append(meta);
+      const bar = el("div", "bar hidden"); bar.append(el("i")); info.append(bar);
+
+      const actions = el("div", "actions");
+      const dl = el("button", "icon-btn"); dl.innerHTML = ICON_DL; dl.title = "Download"; dl.setAttribute("aria-label", "Download " + f.name);
+      const del = el("button", "icon-btn del"); del.innerHTML = ICON_DEL; del.title = "Delete"; del.setAttribute("aria-label", "Delete " + f.name);
+
+      dl.onclick = async () => {
+        dl.disabled = del.disabled = true; bar.classList.remove("hidden"); bar.classList.add("indet");
+        try {
+          await downloadFile(f, p => { if (p != null) { bar.classList.remove("indet"); bar.firstChild.style.width = (p * 100).toFixed(0) + "%"; } });
+          toast("Downloaded " + f.name);
+        } catch (e) { toast(friendly(e), 4000); }
+        dl.disabled = del.disabled = false; bar.classList.add("hidden"); bar.classList.remove("indet"); bar.firstChild.style.width = "0";
+      };
+      del.onclick = async () => {
+        if (!confirm(`Delete "${f.name}"?`)) return;
+        dl.disabled = del.disabled = true; item.style.opacity = ".5";
+        try { await deleteFile(f); files = files.filter(x => x !== f); renderFiles(); toast("Deleted"); }
+        catch (e) { item.style.opacity = ""; dl.disabled = del.disabled = false; toast(friendly(e), 4000); refresh(); }
+      };
+      actions.append(dl, del);
+      item.append(ext, info, actions);
+      box.append(item);
+    }
+  }
+
+  async function refresh() {
+    if (!cfg || loading) return;
+    loading = true; $("refreshBtn").classList.add("spin");
+    try { files = await listFiles(); }
+    catch (e) { toast(friendly(e), 4500); }
+    loading = false; $("refreshBtn").classList.remove("spin");
+    renderFiles();
+  }
+
+  // ---------- UI: uploads ----------
+  let queue = Promise.resolve();
+  let active = 0;
+
+  function addUploads(list) {
+    for (const file of list) {
+      if (file.size > MAX_BYTES) { toast(`"${file.name}" is ${fmtSize(file.size)} — limit is 20 MB.`, 4000); continue; }
+      if (file.size === 0) { toast(`"${file.name}" is empty.`); continue; }
+      const row = el("div", "item");
+      const info = el("div", "info");
+      info.append(el("div", "name", file.name));
+      const meta = el("div", "meta", `${fmtSize(file.size)} · Waiting…`);
+      const bar = el("div", "bar"); bar.append(el("i"));
+      info.append(meta, bar);
+      row.append(el("div", "ext", extOf(file.name)), info);
+      $("uploads").append(row); $("uploadsWrap").classList.remove("hidden");
+      active++;
+      queue = queue.then(async () => {
+        const stage = s => { meta.textContent = `${fmtSize(file.size)} · ${s}`; bar.classList.toggle("indet", s !== "Uploading…"); };
+        try {
+          await uploadFile(file, p => { bar.firstChild.style.width = (p * 100).toFixed(0) + "%"; }, stage);
+          row.remove(); toast("Uploaded " + file.name);
+          await refresh();
+        } catch (e) {
+          bar.classList.add("hidden");
+          meta.replaceChildren(el("span", "err", friendly(e)));
+          setTimeout(() => row.remove(), 8000);
+        } finally {
+          active--; if (!active) setTimeout(() => { if (!active && !$("uploads").children.length) $("uploadsWrap").classList.add("hidden"); }, 8100);
+        }
+      });
+    }
+  }
+
+  // ---------- views ----------
+  function showSetup(editing) {
+    $("mainView").classList.add("hidden");
+    ["refreshBtn", "linkBtn", "settingsBtn"].forEach(id => $(id).classList.add("hidden"));
+    $("setupForm").classList.remove("hidden");
+    $("cancelSetup").classList.toggle("hidden", !editing);
+    $("forgetBtn").classList.toggle("hidden", !editing);
+    $("fOwner").value = cfg ? cfg.owner : "";
+    $("fRepo").value = cfg ? cfg.repo : "";
+    $("fToken").value = cfg ? cfg.token : "";
+    $("setupMsg").textContent = ""; $("setupMsg").className = "form-msg";
+  }
+  function showMain() {
+    $("setupForm").classList.add("hidden");
+    $("mainView").classList.remove("hidden");
+    ["refreshBtn", "linkBtn", "settingsBtn"].forEach(id => $(id).classList.remove("hidden"));
+    refresh();
+  }
+
+  $("setupForm").onsubmit = async e => {
+    e.preventDefault();
+    const candidate = { owner: $("fOwner").value.trim(), repo: $("fRepo").value.trim(), token: $("fToken").value.trim() };
+    const msg = $("setupMsg"); msg.className = "form-msg"; msg.textContent = "Checking…";
+    $("saveBtn").disabled = true;
+    const prev = cfg; cfg = candidate;
+    try {
+      const repo = await gh(rp());
+      if (!repo.private) { const err = new Error("This repo is public — anyone could see your files. Use a private repo."); throw err; }
+      saveCfg(candidate); showMain();
+    } catch (err) {
+      cfg = prev; msg.className = "form-msg bad"; msg.textContent = friendly(err);
+    }
+    $("saveBtn").disabled = false;
+  };
+  $("cancelSetup").onclick = () => showMain();
+  $("forgetBtn").onclick = () => { if (confirm("Remove the token from this device?")) { clearCfg(); files = []; showSetup(false); } };
+  $("settingsBtn").onclick = () => showSetup(true);
+  $("refreshBtn").onclick = () => refresh();
+
+  // Link another device (config travels in the URL fragment, which is never sent to a server)
+  function setupLink() {
+    const payload = btoa(unescape(encodeURIComponent(JSON.stringify(cfg)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    return location.origin + location.pathname + "#setup=" + payload;
+  }
+  $("linkBtn").onclick = () => {
+    const link = setupLink(), box = $("qr"); box.replaceChildren();
+    if (window.QRCode) new QRCode(box, { text: link, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+    else box.append(el("div", "", "QR library didn't load — use Copy link."));
+    $("linkDlg").showModal();
+  };
+  $("closeLinkBtn").onclick = () => { $("qr").replaceChildren(); $("linkDlg").close(); };
+  $("copyLinkBtn").onclick = async () => {
+    try { await navigator.clipboard.writeText(setupLink()); toast("Link copied — treat it like a password"); }
+    catch { toast("Couldn't copy on this browser"); }
+  };
+
+  function readSetupFragment() {
+    const m = /^#setup=([A-Za-z0-9_-]+)$/.exec(location.hash);
+    if (!m) return;
+    history.replaceState(null, "", location.pathname + location.search);
+    try {
+      let b = m[1].replace(/-/g, "+").replace(/_/g, "/"); while (b.length % 4) b += "=";
+      const c = JSON.parse(decodeURIComponent(escape(atob(b))));
+      if (c && c.owner && c.repo && c.token) { saveCfg({ owner: c.owner, repo: c.repo, token: c.token }); toast("Device linked"); }
+    } catch { toast("That setup link is invalid"); }
+  }
+
+  // ---------- input: picker, drag & drop, paste ----------
+  $("fileInput").onchange = e => { addUploads([...e.target.files]); e.target.value = ""; };
+  const drop = $("drop"), mask = $("dragmask");
+  let dragDepth = 0;
+  const hasFiles = e => e.dataTransfer && [...e.dataTransfer.types].includes("Files");
+  addEventListener("dragenter", e => { if (!cfg || !hasFiles(e)) return; e.preventDefault(); dragDepth++; mask.classList.remove("hidden"); });
+  addEventListener("dragover", e => { if (hasFiles(e)) e.preventDefault(); });
+  addEventListener("dragleave", e => { if (!hasFiles(e)) return; if (--dragDepth <= 0) { dragDepth = 0; mask.classList.add("hidden"); } });
+  addEventListener("drop", e => {
+    if (!hasFiles(e)) return; e.preventDefault(); dragDepth = 0; mask.classList.add("hidden"); drop.classList.remove("over");
+    if (cfg && !$("mainView").classList.contains("hidden")) addUploads([...e.dataTransfer.files]);
+  });
+  addEventListener("paste", e => {
+    if (!cfg || $("mainView").classList.contains("hidden")) return;
+    const fl = e.clipboardData && [...e.clipboardData.files];
+    if (fl && fl.length) { e.preventDefault(); addUploads(fl); }
+  });
+
+  // keep countdowns fresh; re-sync when the tab comes back
+  setInterval(() => { if (cfg && !$("mainView").classList.contains("hidden")) renderFiles(); }, 30000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && cfg && !$("mainView").classList.contains("hidden")) refresh(); });
+
+  // ---------- start ----------
+  readSetupFragment();
+  cfg = cfg || loadCfg();
+  if (cfg && cfg.owner && cfg.repo && cfg.token) showMain(); else { cfg = null; showSetup(false); }
+})();
+</script>
+</body>
+</html>
