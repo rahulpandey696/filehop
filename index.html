@@ -200,8 +200,13 @@ dialog::backdrop{background:rgba(10,12,16,.5)}
   function friendly(e) {
     const s = e && e.status;
     if (s === 401) return "Token rejected — check or renew it in Settings.";
-    if (s === 403) return "Not allowed — the token needs Contents: Read and write on this repo.";
-    if (s === 404) return "Repo not found — check the name, and that the token can access it.";
+    if (s === 403 || s === 429) {
+      const m = (e && e.ghMsg) || "";
+      if (/rate limit/i.test(m) || s === 429) return "GitHub rate limit hit — wait a few minutes and try again.";
+      if (!m || /not accessible|permission|access/i.test(m)) return "Not allowed — the token needs Contents: Read and write on this repo." + (m ? ` (GitHub: ${m})` : "");
+      return "GitHub refused (403): " + m;
+    }
+    if (s === 404) return "Not found — check the repo name and token access, or the file may have expired.";
     return (e && e.message) || "Something went wrong.";
   }
 
@@ -213,7 +218,7 @@ dialog::backdrop{background:rgba(10,12,16,.5)}
       let msg = "";
       try { msg = (await res.json()).message || ""; } catch {}
       const err = new Error(`GitHub error ${res.status}${msg ? ": " + msg : ""}`);
-      err.status = res.status; throw err;
+      err.status = res.status; err.ghMsg = msg; throw err;
     }
     return res.status === 204 ? null : res.json();
   }
@@ -229,10 +234,15 @@ dialog::backdrop{background:rgba(10,12,16,.5)}
       x.responseType = responseType;
       if (onUp) x.upload.onprogress = e => e.lengthComputable && onUp(e.loaded / e.total);
       if (onDown) x.onprogress = e => onDown(e.lengthComputable ? e.loaded / e.total : null);
-      x.onload = () => {
+      x.onload = async () => {
         if (x.status >= 200 && x.status < 300) return resolve(x.response);
-        const msg = responseType === "json" && x.response && x.response.message ? ": " + x.response.message : "";
-        const err = new Error(`GitHub error ${x.status}${msg}`); err.status = x.status; reject(err);
+        let msg = "";
+        try {
+          if (responseType === "json") msg = (x.response && x.response.message) || "";
+          else if (x.response instanceof Blob) msg = JSON.parse(await x.response.text()).message || "";
+        } catch {}
+        const err = new Error(`GitHub error ${x.status}${msg ? ": " + msg : ""}`);
+        err.status = x.status; err.ghMsg = msg; reject(err);
       };
       x.onerror = () => reject(new Error("Network error — check your connection."));
       x.send(body);
@@ -297,8 +307,34 @@ dialog::backdrop{background:rgba(10,12,16,.5)}
     throw new Error("Couldn't save after several tries — please retry.");
   }
 
+  function b64ToBlob(b64) {
+    const bin = atob(b64.replace(/\s/g, ""));
+    const u = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    return new Blob([u]);
+  }
+
+  // Three routes to the same bytes; if GitHub refuses one, try the next.
   async function downloadFile(f, onDown) {
-    const data = await xhr("GET", `${rp()}/git/blobs/${f.sha}`, { accept: "application/vnd.github.raw+json", responseType: "blob", onDown });
+    const RAW = "application/vnd.github.raw+json";
+    const routes = [
+      () => xhr("GET", `${rp()}/git/blobs/${f.sha}`, { accept: RAW, responseType: "blob", onDown }),
+      () => xhr("GET", `${rp()}/contents/${encPath(f.path)}?ref=${BRANCH}`, { accept: RAW, responseType: "blob", onDown }),
+      async () => b64ToBlob((await xhr("GET", `${rp()}/git/blobs/${f.sha}`, { onDown })).content),
+    ];
+    let data = null, firstErr = null;
+    for (const route of routes) {
+      try {
+        const d = await route();
+        if (d && d.size === f.size) { data = d; break; }
+        firstErr = firstErr || new Error(`Download incomplete (${d ? d.size : 0} of ${f.size} bytes).`);
+      } catch (e) {
+        console.warn("FileHop download route failed:", e);
+        firstErr = firstErr || e;
+        if (e.status === 401 || e.status === 404 || !e.status) break; // bad token, file gone, or offline: no point retrying
+      }
+    }
+    if (!data) throw firstErr;
     const url = URL.createObjectURL(data);
     const a = document.createElement("a");
     a.href = url; a.download = f.name; document.body.appendChild(a); a.click(); a.remove();
